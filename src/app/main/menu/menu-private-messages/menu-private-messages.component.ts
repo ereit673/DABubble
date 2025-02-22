@@ -216,7 +216,8 @@ export class MenuPrivateMessagesComponent implements OnInit, OnDestroy {
     }
     if (ids.some(id => id === undefined || id === null)) 
       throw new Error('User-ID ist undefined.');
-    this.checkForOwnPrivatChat(ids, id, id2)
+    this.checkForOwnPrivatChat(ids, id, id2);
+    console.log(id, id2, ids);
   }
 
 
@@ -272,14 +273,16 @@ export class MenuPrivateMessagesComponent implements OnInit, OnDestroy {
    * @param user - An object containing user data, expected to have at least two elements where the second element is used.
    */
   getSecondUser(user:any) {
-    const secondUser = {
-      name: user[1].name ? user[1].name : "",
-      userId: user[1].userId ? user[1].userId : "",
-      photoURL: user[1].photoURL ? user[1].photoURL : "",
-      email: user[1].email ? user[1].email : "",
-      status: user[1].status ? user[1].status : false,
-    };
-    this.activeUsers.push(secondUser);
+    if(user[1]){
+      const secondUser = {
+        name: user[1].name ? user[1].name : "",
+        userId: user[1].userId ? user[1].userId : "",
+        photoURL: user[1].photoURL ? user[1].photoURL : "",
+        email: user[1].email ? user[1].email : "",
+        status: user[1].status ? user[1].status : false,
+      };
+      this.activeUsers.push(secondUser);
+    }
   }
 
 
