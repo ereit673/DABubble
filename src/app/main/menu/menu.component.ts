@@ -2,26 +2,32 @@ import { Component, HostListener } from '@angular/core';
 import { MenuHeaderComponent } from './menu-header/menu-header.component';
 import { MenuChannelsComponent } from './menu-channels/menu-channels.component';
 import { MenuPrivateMessagesComponent } from './menu-private-messages/menu-private-messages.component';
-import { SearchbarComponent } from "../../shared/header/searchbar/searchbar.component";
+import { SearchbarComponent } from '../../shared/header/searchbar/searchbar.component';
 import { SharedService } from '../../shared/services/newmessage.service';
 import { StateService } from '../../shared/services/state.service';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [MenuHeaderComponent, MenuChannelsComponent, MenuPrivateMessagesComponent],
+  imports: [
+    MenuHeaderComponent,
+    MenuChannelsComponent,
+    MenuPrivateMessagesComponent,
+  ],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.scss'
+  styleUrl: './menu.component.scss',
 })
 export class MenuComponent {
-
   /**
    * The constructor for the MenuComponent class.
    * It injects the SharedService and StateService services.
    * @param sharedService The injected SharedService service.
    * @param stateService The injected StateService service.
    */
-  constructor(private sharedService: SharedService, private stateService: StateService) {}
+  constructor(
+    private sharedService: SharedService,
+    private stateService: StateService
+  ) {}
 
   /**
    * Creates a new message.
@@ -30,6 +36,6 @@ export class MenuComponent {
    */
   createNewMessage() {
     this.sharedService.updateVariable('createMessagePressed');
-    this.stateService.setMenuState("out");
+    this.stateService.setMenuState('out');
   }
 }
