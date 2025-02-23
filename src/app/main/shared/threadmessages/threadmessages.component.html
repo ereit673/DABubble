@@ -81,6 +81,7 @@
   <div class="chatbox__msg-item2" [class.chatbox__msg-sent-item2]="threadMessage.createdBy === activeUserId">
     <div class="chatbox__msg-info" [class.chatbox__msg-sent-info]="threadMessage.createdBy === activeUserId">
       <h3 (click)="checkIdIsUser(threadMessage.createdBy)" class="chatbox__msg-name">{{ userService.getuserName(threadMessage.createdBy) | async }}
+        @if (threadMessage.createdBy == activeUserId) { (Du) }
       </h3>
       <p class="chatbox__msg-time">{{ threadMessage.timestamp | date: "HH:mm" }}</p>
     </div>
