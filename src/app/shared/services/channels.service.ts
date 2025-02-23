@@ -1,5 +1,17 @@
 import { HostListener, Injectable } from '@angular/core';
-import { Firestore, collection, doc, getDoc, getDocs, setDoc, addDoc, onSnapshot, query, where, deleteDoc } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  onSnapshot,
+  query,
+  where,
+  deleteDoc,
+} from '@angular/fire/firestore';
 import { Channel } from '../../models/channel';
 import { BehaviorSubject } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -12,14 +24,17 @@ import { UserService } from './user.service';
 export class ChannelsService {
   private currentChannelSubject = new BehaviorSubject<Channel | null>(null);
   currentChannel$ = this.currentChannelSubject.asObservable();
-  private userChangesSubject = new BehaviorSubject<{ id: string; name: string } | null>(null);
+  private userChangesSubject = new BehaviorSubject<{
+    id: string;
+    name: string;
+  } | null>(null);
   userChanges$ = this.userChangesSubject.asObservable();
   private previousTimestamp: number | null = null;
   private collectionName = 'channels';
   threadAktive: boolean = false;
   channelsOpen: boolean = true;
   default: boolean = false;
-  mobile = false
+  mobile = false;
 
   /**
    * Creates an instance of the ChannelsService.
@@ -41,7 +56,7 @@ export class ChannelsService {
 
   /**
    * Updates the `mobile` property based on the current window width.
-  */
+   */
   @HostListener('window:resize', ['$event'])
   onResize() {
     this.mobile = window.innerWidth <= 900;
@@ -59,7 +74,6 @@ export class ChannelsService {
     }
   }
 
-
   /**
    * Initializes the default channel for the current user.
    * Retrieves all channels, filters them to find the channels the user is a member of,
@@ -67,10 +81,14 @@ export class ChannelsService {
    */
   async initDefaultChannel() {
     const userId = this.authService.userId();
-    if (!userId) { return console.warn('Keine Benutzer-ID verfügbar.') }
+    if (!userId) {
+      return console.warn('Keine Benutzer-ID verfügbar.');
+    }
     const channels = await this.getAllChannels();
-    const userChannels = channels.filter(channel => channel.members && channel.members.includes(userId));
-    
+    const userChannels = channels.filter(
+      (channel) => channel.members && channel.members.includes(userId)
+    );
+
     if (userChannels.length > 0) {
       this.searchAndSetDefaultChannel(userChannels);
     } else {
@@ -82,7 +100,6 @@ export class ChannelsService {
     }
   }
 
-
   /**
    * Searches for a channel to set as the default channel based on the channels the user is a member of.
    * Looks for a channel ID in the local storage and attempts to find a matching channel in the provided array.
@@ -91,15 +108,13 @@ export class ChannelsService {
   async searchAndSetDefaultChannel(userChannels: Channel[]) {
     const cachedChannelId = localStorage.getItem('lastChannelId');
     const defaultChannel = cachedChannelId
-      ? userChannels.find(channel => channel.id === cachedChannelId) || userChannels[0]
+      ? userChannels.find((channel) => channel.id === cachedChannelId) ||
+        userChannels[0]
       : userChannels[0];
     if (defaultChannel && defaultChannel.id) {
-      if (!this.mobile)
-        await this.selectChannel(defaultChannel.id);
-    } else 
-      console.warn('Kein gültiger Default-Channel gefunden.');
+      if (!this.mobile) await this.selectChannel(defaultChannel.id);
+    } else console.warn('Kein gültiger Default-Channel gefunden.');
   }
-
 
   /**
    * Selects a channel based on the provided channel ID.
@@ -108,21 +123,21 @@ export class ChannelsService {
    * @returns {Promise<void>} - A promise that resolves when the channel is selected.
    */
   async selectChannel(channelId: string): Promise<void> {
-    if (!channelId)
-      return console.error('Ungültige Channel-ID.');
-    const channelRef = doc(this.firestore, `${this.collectionName}/${channelId}`);
+    if (!channelId) return console.error('Ungültige Channel-ID.');
+    const channelRef = doc(
+      this.firestore,
+      `${this.collectionName}/${channelId}`
+    );
     onSnapshot(channelRef, (channelDoc) => {
       if (channelDoc.exists()) {
         const channel = { id: channelId, ...channelDoc.data() } as Channel;
         this.currentChannelSubject.next(channel);
-        localStorage.setItem('lastChannelId', channel.id || "");
+        localStorage.setItem('lastChannelId', channel.id || '');
       }
     });
-    if (window.innerWidth <= 900)
-      this.stateService.closeMenuAndThread();
+    if (window.innerWidth <= 900) this.stateService.closeMenuAndThread();
     this.stateService.setThreadchatState('out');
   }
-
 
   /**
    * Creates a new channel in Firestore.
@@ -142,14 +157,16 @@ export class ChannelsService {
     }
   }
 
-
   /**
    * Retrieves a channel by its ID from Firestore.
    * @param {string} channelId The ID of the channel to retrieve.
    * @returns {Promise<Channel | null>} A Promise resolving to the retrieved channel object or null if the channel does not exist.
    */
   async getChannelById(channelId: string): Promise<Channel | null> {
-    const channelRef = doc(this.firestore, `${this.collectionName}/${channelId}`);
+    const channelRef = doc(
+      this.firestore,
+      `${this.collectionName}/${channelId}`
+    );
     try {
       const channelSnapshot = await getDoc(channelRef);
       if (channelSnapshot.exists()) {
@@ -163,7 +180,6 @@ export class ChannelsService {
     }
   }
 
-
   /**
    * Retrieves all channels from Firestore, sorted by their name.
    * @returns A promise that resolves with an array of Channel objects.
@@ -171,10 +187,11 @@ export class ChannelsService {
    */
   async getAllChannels(): Promise<Channel[]> {
     const channelsRef = collection(this.firestore, this.collectionName);
-    
+
     try {
-      const querySnapshot = await getDocs(channelsRef);            
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel))
+      const querySnapshot = await getDocs(channelsRef);
+      return querySnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Channel))
         .sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Fehler beim Abrufen der Channels:', error);
@@ -182,32 +199,35 @@ export class ChannelsService {
     }
   }
 
-
   /**
-   * Loads the channels in real-time from Firestore. 
+   * Loads the channels in real-time from Firestore.
    * @param callback A callback function that is called whenever the channels change.
    * @returns A function that can be called to unsubscribe from the Firestore channel
    */
   loadChannelsRealtime(callback: (channels: Channel[]) => void): () => void {
     const userId = this.authService.userId();
     const channelsRef = collection(this.firestore, this.collectionName);
-    const queryRef = query(channelsRef, where('members', 'array-contains', userId));
+    const queryRef = query(
+      channelsRef,
+      where('members', 'array-contains', userId)
+    );
     const unsubscribe = onSnapshot(queryRef, (snapshot) => {
       const channels = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Channel))
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Channel))
         .sort((a, b) => a.name.localeCompare(b.name));
       callback(channels);
     });
     return unsubscribe;
   }
 
-
   /**
    * Retrieves the members of a list of private channels.
    * @param {Channel[]} privateChannels - An array of private channel objects.
    * @returns {Promise<{ [channelId: string]: string[] }>} - An object mapping channel IDs to arrays of user IDs.
    */
-  async getChannelMembers(privateChannels: Channel[]): Promise<{ [channelId: string]: string[] }> {
+  async getChannelMembers(
+    privateChannels: Channel[]
+  ): Promise<{ [channelId: string]: string[] }> {
     const userId = this.authService.userId();
     const channelMembers: { [channelId: string]: string[] } = {};
     for (const channel of privateChannels) {
@@ -215,11 +235,13 @@ export class ChannelsService {
         console.error('Channel has no ID:', channel);
         continue;
       }
-      channelMembers[channel.id] = await this.determineChannelMembers(channel, userId);
+      channelMembers[channel.id] = await this.determineChannelMembers(
+        channel,
+        userId
+      );
     }
     return channelMembers;
   }
-
 
   /**
    * Determines the members of a private channel.
@@ -227,7 +249,10 @@ export class ChannelsService {
    * @param {string} userId - The current user's ID.
    * @returns {Promise<string[]>} - A list of usernames in the channel.
    */
-  private async determineChannelMembers(channel: Channel, userId: string | null): Promise<string[]> {
+  private async determineChannelMembers(
+    channel: Channel,
+    userId: string | null
+  ): Promise<string[]> {
     const memberIds = channel.members;
     if (memberIds.length === 2 && userId)
       return this.getConversationPartnerNames(memberIds, userId);
@@ -242,13 +267,17 @@ export class ChannelsService {
    * @param {string} userId - The current user's ID.
    * @returns {Promise<string[]>} - A list containing the partner's username.
    */
-  private async getConversationPartnerNames(memberIds: string[], userId: string): Promise<string[]> {
-    const conversationPartnerId = memberIds.find(id => id !== userId);
+  private async getConversationPartnerNames(
+    memberIds: string[],
+    userId: string
+  ): Promise<string[]> {
+    const conversationPartnerId = memberIds.find((id) => id !== userId);
     if (!conversationPartnerId) return ['Unknown'];
-    const usernames = await this.userService.getUsernamesByIds([conversationPartnerId]);
-    return usernames.map(user => user.name);
+    const usernames = await this.userService.getUsernamesByIds([
+      conversationPartnerId,
+    ]);
+    return usernames.map((user) => user.name);
   }
-
 
   /**
    * Retrieves the current user's name and appends "(You)".
@@ -257,9 +286,8 @@ export class ChannelsService {
    */
   private async getCurrentUserName(userId: string): Promise<string[]> {
     const currentUser = await this.userService.getUsernamesByIds([userId]);
-    return currentUser.map(user => `${user.name} (You)`);
+    return currentUser.map((user) => `${user.name} (You)`);
   }
-
 
   /**
    * Retrieves the name of the first conversation partner for a given channel.
@@ -267,13 +295,14 @@ export class ChannelsService {
    * @param channelMembers - An object mapping channel IDs to arrays of member names.
    * @returns The name of the first conversation partner or 'Unbekannt' if not found.
    */
-  getConversationPartnerName(channelId: string, channelMembers: { [channelId: string]: string[] }): string {
+  getConversationPartnerName(
+    channelId: string,
+    channelMembers: { [channelId: string]: string[] }
+  ): string {
     const members = channelMembers[channelId];
-    if (!members || members.length === 0)
-      return 'Unbekannt';
+    if (!members || members.length === 0) return 'Unbekannt';
     return members[0];
   }
-
 
   /**
    * Toggles the channels open state between true and false.
@@ -284,15 +313,20 @@ export class ChannelsService {
     this.channelsOpen = !this.channelsOpen;
   }
 
-
   /**
    * Updates a channel with the given ID in Firestore.
    * @param channelId The ID of the channel to update.
    * @param updatedData The data to update for the channel.
    * @returns A promise that resolves when the channel is updated.
    */
-  async updateChannel(channelId: string, updatedData: Partial<Channel>): Promise<void> {
-    const channelRef = doc(this.firestore, `${this.collectionName}/${channelId}`);
+  async updateChannel(
+    channelId: string,
+    updatedData: Partial<Channel>
+  ): Promise<void> {
+    const channelRef = doc(
+      this.firestore,
+      `${this.collectionName}/${channelId}`
+    );
     try {
       await setDoc(channelRef, updatedData, { merge: true });
     } catch (error) {
@@ -301,7 +335,6 @@ export class ChannelsService {
     }
   }
 
-
   /**
    * Clears the current channel by emitting a null value to the current channel observable and
    * removing the last channel ID from local storage.
@@ -309,21 +342,25 @@ export class ChannelsService {
   clearCurrentChannel(): void {
     this.currentChannelSubject.next(null);
     localStorage.removeItem('lastChannelId');
-    this.default
+    this.default;
     this.setDefaultChannel();
   }
-
 
   /**
    * Deletes a channel with the given ID from Firestore.
    * @param channelId The ID of the channel to delete.
    */
   async deleteChannel(channelId: string): Promise<void> {
-    const channelRef = doc(this.firestore, `${this.collectionName}/${channelId}`);
-    try {await deleteDoc(channelRef)} 
-    catch (error) {console.error('Fehler beim Löschen des Channels:', error)}
+    const channelRef = doc(
+      this.firestore,
+      `${this.collectionName}/${channelId}`
+    );
+    try {
+      await deleteDoc(channelRef);
+    } catch (error) {
+      console.error('Fehler beim Löschen des Channels:', error);
+    }
   }
-
 
   /**
    * Retrieves all private channels from Firestore that contain all of the given member IDs.
@@ -335,14 +372,17 @@ export class ChannelsService {
     const queryRef = query(channelsRef, where('isPrivate', '==', true));
     try {
       const querySnapshot = await getDocs(queryRef);
-      const channels = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel));
-      return channels.filter(channel => memberIds.every(memberId => channel.members.includes(memberId)));
+      const channels = querySnapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Channel)
+      );
+      return channels.filter((channel) =>
+        memberIds.every((memberId) => channel.members.includes(memberId))
+      );
     } catch (error) {
       console.error('Fehler beim Abrufen privater Channels:', error);
       return [];
     }
   }
-
 
   /**
    * Emits an event on the userChangesSubject observable whenever a user's name is changed.
@@ -353,7 +393,6 @@ export class ChannelsService {
     this.userChangesSubject.next({ id: userId, name: newName });
   }
 
-
   /**
    * Tracks changes to all user documents in the Firestore users collection.
    * Listens to the users collection and emits an event on the userChangesSubject observable.
@@ -363,22 +402,26 @@ export class ChannelsService {
     onSnapshot(usersRef, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'modified') {
-          const updatedUser = { id: change.doc.id, ...change.doc.data() } as { id: string; name: string };
+          const updatedUser = { id: change.doc.id, ...change.doc.data() } as {
+            id: string;
+            name: string;
+          };
           this.userChangesSubject.next(updatedUser);
         }
       });
     });
   }
 
-
   /**
- * Checks if the given timestamp represents a different day than the previous one.
- * Updates the stored timestamp for future comparisons.
- * @param {string | Date | undefined} currentTimestamp - The timestamp to check.
- * @returns {boolean} - `true` if the day has changed, `false` otherwise.
- * @throws {Error} - If an invalid timestamp is provided.
- */
-  checkAndSetPreviousTimestamp(currentTimestamp: string | Date | undefined): boolean {
+   * Checks if the given timestamp represents a different day than the previous one.
+   * Updates the stored timestamp for future comparisons.
+   * @param {string | Date | undefined} currentTimestamp - The timestamp to check.
+   * @returns {boolean} - `true` if the day has changed, `false` otherwise.
+   * @throws {Error} - If an invalid timestamp is provided.
+   */
+  checkAndSetPreviousTimestamp(
+    currentTimestamp: string | Date | undefined
+  ): boolean {
     if (!currentTimestamp) return false;
     const currentDate = new Date(currentTimestamp);
     if (isNaN(currentDate.getTime()))
@@ -391,8 +434,9 @@ export class ChannelsService {
     const isDifferentDay =
       currentDate.getDate() !== previousDate.getDate() ||
       currentDate.getMonth() !== previousDate.getMonth() ||
-      currentDate.getFullYear() !== previousDate.getFullYear();
-    this.previousTimestamp = currentDate.getTime();
+      currentDate.getFullYear() !== previousDate.getFullYear() 
+      
+      ;
     return isDifferentDay;
   }
 }

@@ -65,24 +65,29 @@
       <span
         >{{ channelCreatorName }} hat diesen Channel {{ timestep }} erstellt.
         Das ist der Anfang des Channels&nbsp;
-        <p style="display:inline-block" class="name nohover">#{{ channelName }}</p>.</span
+        <p style="display: inline-block" class="name nohover">
+          #{{ channelName }}
+        </p>
+        .</span
       >
       }
     </div>
   </div>
-  } @else { @for (message of (messages$ | async); track message.docId) { @if
-  (message ) { @let shouldRenderDivider =
-  channelsService.checkAndSetPreviousTimestamp(message.timestamp); @if
-  (activeUserId){
-  <app-messages
-    style="width: 100"
-    [shouldRenderDivider]="shouldRenderDivider"
-    [message]="message"
-    [activeUserId]="activeUserId"
-    [isCurrentUser]="message.createdBy === activeUserId"
-    (userClicked)="handleUserClick($event)"
-  >
-  </app-messages>
-  } } } }
+  } @else { 
+    @for (message of (messages$ | async); track message.docId) {
+      @let i = $index;
+    
+      @let shouldRenderDivider = (i === 0) ? true : channelsService.checkAndSetPreviousTimestamp(message.timestamp);
+    
+      @if (activeUserId) {
+        <app-messages
+          style="width: 100"
+          [shouldRenderDivider]="shouldRenderDivider"
+          [message]="message"
+          [activeUserId]="activeUserId"
+          [isCurrentUser]="message.createdBy === activeUserId"
+          (userClicked)="handleUserClick($event)"
+        ></app-messages>
+  } } } 
 </div>
 }}
