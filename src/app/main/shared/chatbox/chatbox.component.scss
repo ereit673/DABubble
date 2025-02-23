@@ -503,6 +503,7 @@
 
   .name {
     color: colors.$purple3;
+    display: inline-block;
 
     &:hover {
       transition: 0.25s ease-in-out;

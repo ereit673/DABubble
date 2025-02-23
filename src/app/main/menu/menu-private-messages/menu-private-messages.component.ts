@@ -217,7 +217,6 @@ export class MenuPrivateMessagesComponent implements OnInit, OnDestroy {
     if (ids.some(id => id === undefined || id === null)) 
       throw new Error('User-ID ist undefined.');
     this.checkForOwnPrivatChat(ids, id, id2);
-    console.log(id, id2, ids);
   }
 
 
